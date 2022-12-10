@@ -1,0 +1,158 @@
+;Programot írta: Menyhárt Tamás
+
+(define (nthelem index lst)
+    (cond
+        [(= index 1) (first lst)]
+        [else
+            (define lowerindex (- index 1))
+            (define farok (rest lst))
+            (define farok-ertek (nthelem lowerindex farok))
+            (+ 0 farok-ertek)]))
+(writeln (nthelem 2 (list 1 2 3 4)))
+
+;(list (listákELSŐMÁTRIXSORAI) ;ÉS
+;(list (listákMASIKMATRIXSORAI)) ;vízszintesen
+
+(define (nthlista index lst)
+    (cond
+        [(= index 1) (first lst)]
+        [else
+            (define lowerindex (- index 1))
+            (define farok (rest lst))
+            (define farok-ertek (nthlista lowerindex farok))
+            (define farok-ertek-fej (first farok-ertek))
+            (define farok-ertek-farok (rest farok-ertek))
+            (cons farok-ertek-fej farok-ertek-farok) ;Józsi ezen a soromon nem tudja túl tenni magát
+            ]))
+(writeln (nthlista 2 (list (list 2 3 4) (list 1 3 4) (list 3 4 5))))
+
+(define (sorokszama matrix)
+    (length matrix))
+(writeln (sorokszama (list (list 2 3 4) (list 1 3 4) (list 3 4 5))))
+
+(define (oszlopokszama matrix)
+    (define fej (first matrix))
+    (length fej))
+(writeln (oszlopokszama (list (list 2 4 3 4) (list 1 3 4 4) (list 3 4 4 5))))
+
+(define (oszlopmegkap index matrix)
+    (cond
+        [(= (length matrix) 0) (list)]
+        ;[(= (length matrix) 1) 
+            ;(define bentilista (nthlista 1 matrix))
+            ;(nthelem index bentilista)
+        ;]
+        [else
+            (define bentilista (nthlista 1 matrix))
+            (define fej (nthelem index bentilista))
+            (define farok (rest matrix))
+            (define farok-ertek (oszlopmegkap index farok))
+            (cons fej farok-ertek)
+        ]))
+
+(define (szorozz-benti-sor-oszlop sor oszlop)
+    (cond
+        [(= (length sor) 0) 0]
+        [else
+            (define sorfej (first sor))
+            (define oszlopfej (first oszlop))
+            (define fej-ertek (* sorfej oszlopfej))
+            (define sorfarok (rest sor))
+            (define oszlopfarok (rest oszlop))
+            (define farok-ertek (szorozz-benti-sor-oszlop sorfarok oszlopfarok))
+            (+ fej-ertek farok-ertek)
+        ]))
+
+(define (szorozz-sor-oszlop sorszam oszlopszam matrix1 matrix2)
+    (define sor (nthlista sorszam matrix1))
+    (define oszlop (oszlopmegkap oszlopszam matrix2))
+    (szorozz-benti-sor-oszlop sor oszlop))
+
+(define (firstmatrixoszlop matrix)
+    (define eredmenyoszlop (oszlopmegkap 1 matrix))
+    (list eredmenyoszlop))
+
+(define (restmatrixoszlop matrix)
+    (restmatrixoszlop-akku 1 matrix))
+
+(define (restmatrixoszlop-akku akku matrix)
+    (cond
+        [(< (oszlopokszama matrix) akku) (list)]
+        [else
+            (define biggerakku (+ akku 1))
+            (define fej (oszlopmegkap akku matrix))
+            (define farok-ertek (restmatrixoszlop-akku biggerakku matrix))
+            (if (> akku 1)
+                (cons fej farok-ertek)
+                (append farok-ertek))
+        ]))
+
+(define (transponalt matrix)
+    (transponalt-akku 1 matrix))
+    
+(define (transponalt-akku akku matrix)
+    (cond
+        [(< (oszlopokszama matrix) akku) (list)]
+        [else
+            (define biggerakku (+ akku 1))
+            (define fej (oszlopmegkap akku matrix))
+            (define farok-ertek (transponalt-akku biggerakku matrix))
+            (cons fej farok-ertek)
+        ]))
+        
+
+(define (szorozz-sor-matrix sor matrix2)
+    (define sormatrix (list sor))
+    (szorozz-sor-matrix-akku 1 sormatrix matrix2))
+
+(define (szorozz-sor-matrix-akku akku sormatrix matrix2)
+    (cond
+        [(> akku (oszlopokszama matrix2)) (list)]
+        [else
+            (define biggerakku (+ akku 1))
+            (define fej-ertek (szorozz-sor-oszlop 1 akku sormatrix matrix2))
+            (define farok-ertek (szorozz-sor-matrix-akku biggerakku sormatrix matrix2))
+            (cons fej-ertek farok-ertek)
+        ]))
+
+
+(define (matrixszorzas-bentisor matrix1 matrix2)
+    (cond
+        [(= (length matrix1) 0) (list)]
+        [else
+            (define matrix1fej (first matrix1))
+            (define fej-ertek (szorozz-sor-matrix matrix1fej matrix2))
+            (define matrix1farok (rest matrix1))
+            (define farok-ertek (matrixszorzas-bentisor matrix1farok matrix2))
+            (cons fej-ertek farok-ertek)
+        ]))
+
+(define (matrixszorzas matrix1 matrix2)
+    (cond
+        [(= (sorokszama matrix1) (oszlopokszama matrix2))
+            (matrixszorzas-bentisor matrix1 matrix2)
+        ]
+        [else "Ezzel nem elvégezhető a szorzás!"]))
+(writeln (oszlopmegkap 2 (list (list 2 3 3 4) (list 1 1 3 4) (list 3 8 4 5) (list 3 9 4 5))))
+(writeln (matrixszorzas (list (list 1 3 4) (list 3 4 5)) (list (list 2 3 4) (list 1 3 4) (list 3 4 5))))
+
+(define sor (list 1 2 3))
+(define matrix2 (list (list 1 4 7) (list 2 5 8) (list 3 6 9)))
+(define sormatrix (list sor))
+(define fej (firstmatrixoszlop matrix2))
+(define farok (restmatrixoszlop matrix2))
+(writeln (transponalt matrix2))
+(writeln "Az eggyel felette lévő a matrix transponaltja, rendes matrix eggyel a szöveg alatt")
+(writeln matrix2)
+(writeln sormatrix)
+(writeln fej)
+(writeln farok)
+(define fej-ertek (szorozz-sor-oszlop 1 1 sormatrix matrix2))
+(writeln fej-ertek)
+(writeln (szorozz-sor-matrix sor matrix2))
+
+
+(writeln (matrixszorzas (list (list 2 3 4) (list 1 3 4) (list 3 4 5)) (list (list 1 2 5) (list 1 3 4) (list 3 4 5))))
+(writeln (matrixszorzas (list (list 2 3 4) (list 1 3 4) (list 3 4 5)) (transponalt(transponalt(list (list 1 2 5) (list 1 3 4) (list 3 4 5))))))
+        
+
